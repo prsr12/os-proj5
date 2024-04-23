@@ -32,15 +32,13 @@ typedef struct {
         unsigned int messageTime[2];    
 } Message;
 
-/* Function Prototypes */
-void handle ( int sig_num );    // Function to handle the alarm or ctrl-c signals
 
-/* Message Queue Variables */
+void handle ( int sig_num );
+
 Message message;
 int messageID;
 key_t messageKey;
 
-/* Shared Memory Variables */
 int shmClockID;
 int *shmClock;
 key_t shmClockKey;
