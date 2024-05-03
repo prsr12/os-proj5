@@ -22,7 +22,6 @@ bool isSafeState ( int available[], int maximum[][maxResources], int allot[][max
 void incrementClock ( unsigned int shmClock[] );
 void printAllocatedResourcesTable( int num1, int array[][maxResources] );
 void printMaxClaimTable( int num1, int array[][maxResources] );
-void printReport();
 void terminateIPC();
 
 int totalResourcesRequested;
@@ -47,7 +46,7 @@ int main ( int argc, char *argv[] ) {
 
 
         int numberOfLines = 0;
-        char logName[10] = "log.txt";
+        char logName[20] = "logfile.txt";
         fp = fopen ( logName, "w+" );
 
         const int killTimer = 5;
@@ -60,13 +59,13 @@ int main ( int argc, char *argv[] ) {
                 perror ( "OSS: alarm signal failed." );
         }
 
-        shmClockKey = 1993;
+        shmClockKey = 2001;
         if ( ( shmClockID = shmget ( shmClockKey, ( 2 * ( sizeof ( unsigned int ) ) ), IPC_CREAT | 0666 ) ) == -1 ) {
                 perror ( "OSS: Failure to create shared memory space for simulated clock." );
                 return 1;
         }
 
-        shmBlockedKey = 1994;
+        shmBlockedKey = 2004;
         if ( ( shmBlockedID = shmget ( shmBlockedKey, ( totalProcessLimit * ( sizeof ( int ) ) ), IPC_CREAT | 0666 ) ) == -1 ) {
                 perror ( "OSS: Failure to create shared memory space for blocked USER process array." );
                 return 1;
@@ -91,7 +90,7 @@ int main ( int argc, char *argv[] ) {
         }
 
 
-        messageKey = 1996;
+        messageKey = 6969;
         if ( ( messageID = msgget ( messageKey, IPC_CREAT | 0666 ) ) == -1 ) {
                 return 1;
         }
@@ -134,7 +133,7 @@ int opt;
         int proc = 0;
         int simul = 0;
         int interval = 1;
-    char filename = 0;
+        char *filername = NULL;
 
 while ((opt = getopt(argc, argv, opstr)) != -1) {
                 switch(opt) {
@@ -154,6 +153,10 @@ while ((opt = getopt(argc, argv, opstr)) != -1) {
                         case 'i':
                                 interval = atoi(optarg);
                                 break;
+                        case 'f':
+                                filername = optarg;
+                                break;
+                                
                         default:
                                 exit(EXIT_FAILURE);
                 }
@@ -219,11 +222,13 @@ while ((opt = getopt(argc, argv, opstr)) != -1) {
                         }
 
                         fprintf ( fp, "Max Claim Vector for new newly generated process: Process %d\n", processIndex);
+                        printf ("Max Claim Vector for new newly generated process: Process %d\n", processIndex);
                         for ( i = 0; i < 20; ++i ) {
                                 fprintf ( fp, "%d: %d\t", i, maxClaimTable[processIndex][i] );
+                                printf ( "%d: %d\t", i, maxClaimTable[processIndex][i] );
                         }
                         fprintf ( fp, "\n" );
-
+                        
                         pid = fork();
 
                         if ( pid < 0 ) {
@@ -263,6 +268,8 @@ while ((opt = getopt(argc, argv, opstr)) != -1) {
                                 sprintf ( intBuffer20, "%d", processIndex );
 
                                 fprintf ( fp, "OSS: Process %d (PID: %d) was created at %d:%d.\n", processIndex,
+                                         getpid(), shmClock[0], shmClock[1] );
+                                printf ("OSS: Process %d (PID: %d) was created at %d:%d.\n", processIndex,
                                          getpid(), shmClock[0], shmClock[1] );
                                 numberOfLines++;
 
@@ -305,6 +312,8 @@ while ((opt = getopt(argc, argv, opstr)) != -1) {
                 if ( tempRequest != -1 ) {
                         fprintf ( fp, "OSS: Process %d requested Resource %d at %d:%d.\n", tempIndex,
                                  tempRequest, tempClock[0], tempClock[1] );
+                        printf ("OSS: Process %d requested Resource %d at %d:%d.\n", tempIndex,
+                                 tempRequest, tempClock[0], tempClock[1] );
                         numberOfLines++;
                         totalResourcesRequested++;
 
@@ -334,6 +343,8 @@ while ((opt = getopt(argc, argv, opstr)) != -1) {
 
                                 fprintf ( fp, "OSS: Process %d was granted its request of Resource %d at %d:%d.\n",
                                          tempIndex, tempRequest, shmClock[0], shmClock[1] );
+                                printf ("OSS: Process %d was granted its request of Resource %d at %d:%d.\n",
+                                         tempIndex, tempRequest, shmClock[0], shmClock[1] );
                                 numberOfLines++;
                         }
 
@@ -350,6 +361,8 @@ while ((opt = getopt(argc, argv, opstr)) != -1) {
 
                                 fprintf ( fp, "OSS: Process %d was denied its request of Resource %d and was blocked at %d:%d.\n",
                                          tempIndex, tempRequest, shmClock[0], shmClock[1] );
+                                printf ("OSS: Process %d was denied its request of Resource %d and was blocked at %d:%d.\n",
+                                         tempIndex, tempRequest, shmClock[0], shmClock[1] );
                                 numberOfLines++;
                         }
 
@@ -360,6 +373,8 @@ while ((opt = getopt(argc, argv, opstr)) != -1) {
                 if ( tempRelease != -1 ) {
                         fprintf ( fp, "OSS: Process %d indicated that it was releasing some of Resource %d at %d:%d.\n",
                                  tempIndex, tempRelease, tempClock[0], tempClock[1] );
+                        printf ("OSS: Process %d indicated that it was releasing some of Resource %d at %d:%d.\n",
+                                 tempIndex, tempRelease, tempClock[0], tempClock[1] );
                         numberOfLines++;
 
                         totalResourcesReleased++;
@@ -368,6 +383,8 @@ while ((opt = getopt(argc, argv, opstr)) != -1) {
 
                         fprintf ( fp, "OSS: Process %d release notification was handled at %d:%d.\n", tempIndex, shmClock[0],
                                  shmClock[1] );
+                        printf ("OSS: Process %d release notification was handled at %d:%d.\n", tempIndex, shmClock[0],
+                                 shmClock[1] );
                         numberOfLines++;
                         incrementClock ( shmClock );
                 }
@@ -375,6 +392,7 @@ while ((opt = getopt(argc, argv, opstr)) != -1) {
 
                 if ( tempTerminate == true ) {
                         fprintf ( fp, "OSS: Process %d terminated at %d:%d.\n", tempIndex, tempClock[0], tempClock[1] );
+                        printf ("OSS: Process %d terminated at %d:%d.\n", tempIndex, tempClock[0], tempClock[1] );
                         numberOfLines++;
 
                         for ( i = 0; i < 20; ++i ) {
@@ -385,6 +403,8 @@ while ((opt = getopt(argc, argv, opstr)) != -1) {
                         currentProcesses--;
 
                         fprintf ( fp, "OSS: Process %ds termination notification was handled at %d:%d.\n", tempIndex,
+                                 shmClock[0], shmClock[1] );
+                        printf ("OSS: Process %ds termination notification was handled at %d:%d.\n", tempIndex,
                                  shmClock[0], shmClock[1] );
                         numberOfLines++;
                         incrementClock ( shmClock );
@@ -423,6 +443,8 @@ while ((opt = getopt(argc, argv, opstr)) != -1) {
 
                                 fprintf ( fp, "OSS: Process %d was granted its request of Resource %d at %d:%d.\n",
                                          tempIndex, tempRequest, shmClock[0], shmClock[1] );
+                                printf ("OSS: Process %d was granted its request of Resource %d at %d:%d.\n",
+                                         tempIndex, tempRequest, shmClock[0], shmClock[1] );
                                 numberOfLines++;
                         } else {
 
@@ -437,6 +459,8 @@ while ((opt = getopt(argc, argv, opstr)) != -1) {
 
                                 fprintf ( fp, "OSS: Process %d was denied it's request of Resource %d and was blocked at %d:%d.\n",
                                          tempIndex, tempRequest, shmClock[0], shmClock[1] );
+                                printf ("OSS: Process %d was denied it's request of Resource %d and was blocked at %d:%d.\n",
+                                         tempIndex, tempRequest, shmClock[0], shmClock[1] );
                                 numberOfLines++;
                         }
                         incrementClock ( shmClock );
@@ -448,12 +472,18 @@ while ((opt = getopt(argc, argv, opstr)) != -1) {
 
                         fprintf ( fp, "Currently Allocated Resources\n" );
                         fprintf ( fp, "\tR0\tR1\tR2\tR3\tR4\tR5\tR6\tR7\tR8\tR9\tR10\tR11\tR12\tR13\tR14\tR15\tR16\tR17\tR18\tR19\n" );
+                        printf ("Currently Allocated Resources\n" );
+                        printf ("\tR0\tR1\tR2\tR3\tR4\tR5\tR6\tR7\tR8\tR9\tR10\tR11\tR12\tR13\tR14\tR15\tR16\tR17\tR18\tR19\n" );
                         for ( i = 0; i < totalProcessesCreated; ++i ) {
                                 fprintf ( fp, "P%d:\t", i );
+                                printf ("P%d:\t", i );
                                 for ( j = 0; j < 20; ++j ) {
                                         fprintf ( fp, "%d\t", allocatedTable[i][j] );
+                                        printf ("%d\t", allocatedTable[i][j] );
                                 }
                                 fprintf ( fp, "\n" );
+                                printf ("\n" );
+                                
                         }
                 }
 
