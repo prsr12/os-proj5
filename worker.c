@@ -1,3 +1,4 @@
+
 #include "header.h"
 
 bool hasResourcesToRelease ( int arr[] );
@@ -21,7 +22,7 @@ int main ( int argc, char *argv[] ) {
         }
 
 
-        shmClockKey = 1993;
+        shmClockKey = 2001;
         if ( ( shmClockID = shmget ( shmClockKey, ( 2 * ( sizeof ( unsigned int ) ) ), 0666 ) ) == -1 ) {
                 perror ( "USER: Failure to find shared memory space for simulated clock." );
                 return 1;
@@ -32,7 +33,7 @@ int main ( int argc, char *argv[] ) {
                 return 1;
         }
 
-        shmBlockedKey = 1994;
+        shmBlockedKey = 2004;
         if ( ( shmBlockedID = shmget ( shmBlockedKey, ( totalProcessLimit * ( sizeof ( int ) ) ), 0666 ) ) == -1 ) {
                 perror ( "USER: Failure to find shared memory space for blocked USER process array." );
                 return 1;
@@ -44,7 +45,7 @@ int main ( int argc, char *argv[] ) {
         }
 
 
-        messageKey = 1996;
+        messageKey = 6969;
         if ( ( messageID = msgget ( messageKey, IPC_CREAT | 0666 ) ) == -1 ) {
                 perror ( "USER: Failure to create the message queue." );
                 return 1;
